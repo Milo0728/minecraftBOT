@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Usuarios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #e5ddd5;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        h1 {
+            color: #075e54;
+        }
+
+        .btn-remove {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-add {
+            background-color: #25d366;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <div id="alerta-whatsapp" class="alert alert-warning text-center" style="display: none;">
+            ⚠️ No se puede gestionar usuarios mientras el bot esté activo.
+        </div>
+
+        <h1 class="mb-4">Usuarios Autorizados</h1>
+
+        <form id="form-usuario" class="row g-3 mb-4">
+            <div class="col-md-5">
+                <input type="text" id="nombre" class="form-control" placeholder="Nombre del usuario" required>
+            </div>
+            <div class="col-md-5">
+                <input type="text" id="telefono" class="form-control"
+                    placeholder="Teléfono sin + ni espacios (ej: 573001234567)" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-add w-100">Agregar</button>
+            </div>
+        </form>
+
+        <ul id="lista-usuarios" class="list-group"></ul>
+
+        <div class="mt-4">
+            <a href="/dashboard" class="btn btn-secondary">← Volver al Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        function sincronizarConBackend() {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+            fetch('/api/guardar_usuarios', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(usuarios)
+            }).then(res => {
+                if (!res.ok) {
+                    console.error("❌ Error al sincronizar usuarios con el backend");
+                }
+            });
+        }
+
+        function validarTelefono(telefono) {
+            const regex = /^\d{10,15}$/;
+            return regex.test(telefono);
+        }
+
+        function cargarUsuarios() {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+            console.log("Usuarios encontrados en localStorage:", usuarios);
+
+            const lista = document.getElementById("lista-usuarios");
+            lista.innerHTML = "";
+
+            if (usuarios.length === 0) {
+                lista.innerHTML = `
+                <li class="list-group-item text-center text-muted">
+                    No hay usuarios registrados.
+                </li>
+            `;
+                return;
+            }
+
+            usuarios.forEach((u, index) => {
+                const li = document.createElement("li");
+                li.className = "list-group-item d-flex justify-content-between align-items-center";
+                li.innerHTML = `
+                <div><strong>${u.nombre}</strong> — ${u.telefono}</div>
+                <button class="btn btn-sm btn-remove" onclick="eliminarUsuario(${index})">Eliminar</button>
+            `;
+                lista.appendChild(li);
+            });
+        }
+
+        function eliminarUsuario(index) {
+            const usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+            usuarios.splice(index, 1);
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+            sincronizarConBackend();
+            cargarUsuarios();
+        }
+
+        document.getElementById("form-usuario").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const nombre = document.getElementById("nombre").value.trim();
+            const telefono = document.getElementById("telefono").value.trim();
+
+            if (!validarTelefono(telefono)) {
+                alert("⚠️ El número debe estar en formato internacional sin + ni espacios. Ej: 573001234567");
+                return;
+            }
+
+            let usuarios = JSON.parse(localStorage.getItem("usuarios") || "[]");
+
+            if (usuarios.some(u => u.telefono === telefono)) {
+                alert("❌ Este número ya está registrado.");
+                return;
+            }
+
+            usuarios.push({ nombre, telefono });
+            localStorage.setItem("usuarios", JSON.stringify(usuarios));
+            sincronizarConBackend();
+            document.getElementById("form-usuario").reset();
+            cargarUsuarios();
+        });
+
+        fetch("/api/whatsapp-status")
+            .then(res => res.json())
+            .then(data => {
+                const whatsappActivo = data.activo;
+
+                if (whatsappActivo) {
+                    document.getElementById("form-usuario").style.display = "none";
+                    document.getElementById("lista-usuarios").innerHTML = `
+                    <li class="list-group-item text-danger text-center">
+                        🔒 Gestión bloqueada mientras el bot esté encendido.
+                    </li>
+                `;
+                    const alerta = document.getElementById("alerta-whatsapp");
+                    if (alerta) alerta.style.display = "block";
+                } else {
+                    cargarUsuarios(); // ✅ Se llama directamente si está permitido
+                }
+            });
+    </script>
+
+
+</body>
+
+</html>

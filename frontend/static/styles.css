@@ -1,0 +1,22 @@
+body {
+  font-family: sans-serif;
+  padding: 2rem;
+  background: #f4f4f4;
+}
+h1, h2 {
+  color: #2a2a2a;
+}
+input {
+  margin: 5px;
+  padding: 6px;
+}
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+li {
+  background: #fff;
+  margin-bottom: 5px;
+  padding: 10px;
+  border-radius: 4px;
+}

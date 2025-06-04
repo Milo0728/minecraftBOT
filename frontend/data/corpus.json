@@ -1,0 +1,42 @@
+[
+  {
+    "pregunta": "¿Cómo consigo diamantes rápido?",
+    "respuesta": "Puedes encontrar diamantes entre las capas -58 y -64. Usa un pico con Fortuna para obtener más."
+  },
+  {
+    "pregunta": "¿Cuál es el comando para volar?",
+    "respuesta": "Si tienes permisos, usa /gamemode creative o /fly para volar."
+  },
+  {
+    "pregunta": "¿Cómo me uno al servidor?",
+    "respuesta": "Abre Minecraft, selecciona 'Multijugador' y agrega nuestra IP del servidor. ¡Listo!"
+  },
+  {
+    "pregunta": "¿Qué versión usan?",
+    "respuesta": "Actualmente jugamos en la versión 1.20.1. ¡Actualízala en tu launcher!"
+  },
+  {
+    "pregunta": "¿Se puede usar mods?",
+    "respuesta": "Sí, siempre y cuando no den ventajas injustas. Mods visuales están permitidos."
+  },
+  {
+    "pregunta": "¿Qué hago si me banearon?",
+    "respuesta": "Puedes apelar tu baneo en nuestro canal de soporte o escribiéndonos por aquí."
+  },
+  {
+    "pregunta": "¿Cómo protejo mi casa?",
+    "respuesta": "Usa el comando /claim y selecciona la zona con la pala dorada. Así nadie podrá romper tu casa."
+  },
+  {
+    "pregunta": "¿Hay eventos activos?",
+    "respuesta": "¡Sí! Consulta el calendario en nuestro Discord o pregúntanos aquí mismo."
+  },
+  {
+    "pregunta": "¿Qué permisos tiene el rango VIP?",
+    "respuesta": "El rango VIP incluye /fly, /kit vip, y acceso a zonas exclusivas del servidor."
+  },
+  {
+    "pregunta": "¿Cómo cambio mi skin?",
+    "respuesta": "En Minecraft Java, cambia tu skin desde la web oficial. En Bedrock, usa el creador de personajes."
+  }
+]

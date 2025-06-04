@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOTILO</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #e5ddd5;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        h1, h2 {
+            color: #075e54;
+        }
+
+        .list-group-item {
+            border: none;
+            border-bottom: 1px solid #eee;
+        }
+
+        .btn-whatsapp {
+            background-color: #25d366;
+            color: white;
+        }
+
+        .btn-remove {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .qr-box {
+            border: 1px dashed #999;
+            padding: 1rem;
+            background: #f8f8f8;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="mb-4">BOTILO</h1>
+
+        <div class="d-flex justify-content-end mb-4">
+            <a href="/usuarios" class="btn btn-success">Gestionar usuarios autorizados</a>
+        </div>
+
+        <div class="qr-box" id="qr-box">
+            <h2>Estado del Bot de WhatsApp</h2>
+            {% if not whatsapp_activo and qr_exists %}
+            <img src="/static/qr.svg?{{ qr_timestamp }}" alt="QR para WhatsApp" style="max-width: 300px;">
+            <p class="mt-3 text-warning fw-bold">📲 Esperando conexión... Escanea el código QR con tu celular.</p>
+
+            {% elif not whatsapp_activo %}
+            <p class="text-danger fw-bold">❌ Servicio de WhatsApp deshabilitado. Ejecuta
+                <code>whatsapp-bot/index.js</code>.
+            </p>
+
+            {% else %}
+            <p class="text-success fw-bold">✅ Bot conectado exitosamente</p>
+            {% endif %}
+        </div>
+
+        <h2 class="mt-4 d-flex justify-content-between align-items-center">
+            <span>Preguntas no entendidas</span>
+            <a href="/vaciar_no_entendidas" class="btn btn-sm btn-remove"
+                onclick="return confirm('¿Estás seguro de vaciar todas las preguntas no entendidas?');">Vaciar todas</a>
+        </h2>
+
+        <ul class="list-group mb-4">
+            {% for item in no_entendidas %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div><strong>{{ item.usuario }}</strong>: {{ item.pregunta }}</div>
+                <a href="/eliminar_no_entendida/{{ loop.index0 }}" class="btn btn-sm btn-remove">Eliminar</a>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <hr>
+
+        <h2>Preguntas y Respuestas en el Corpus</h2>
+        <ul class="list-group mb-4">
+            {% for item in corpus %}
+            <li class="list-group-item"><strong>{{ item.pregunta }}</strong> → {{ item.respuesta }}</li>
+            {% endfor %}
+        </ul>
+
+        <h2>Agregar nueva pregunta</h2>
+        <form action="" method="get" onsubmit="return redirectToAgregar()" class="row g-3">
+            <div class="col-md-5">
+                <input type="text" id="pregunta" class="form-control" placeholder="Pregunta" required>
+            </div>
+            <div class="col-md-5">
+                <input type="text" id="respuesta" class="form-control" placeholder="Respuesta" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-whatsapp w-100">Agregar</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function redirectToAgregar() {
+            const pregunta = document.getElementById('pregunta').value;
+            const respuesta = document.getElementById('respuesta').value;
+            if (!pregunta || !respuesta) return false;
+            const url = `/agregar/${encodeURIComponent(pregunta)}/${encodeURIComponent(respuesta)}`;
+            window.location.href = url;
+            return false;
+        }
+
+        let estadoAnterior = "{{ 'activo' if whatsapp_activo else 'deshabilitado' }}";
+
+        function verificarEstadoBot() {
+            fetch("/api/whatsapp-status")
+                .then(res => res.json())
+                .then(data => {
+                    const nuevoEstado = data.activo ? "activo" : "deshabilitado";
+                    const qrBox = document.getElementById("qr-box");
+
+                    if (nuevoEstado !== estadoAnterior) {
+                        estadoAnterior = nuevoEstado;
+                        qrBox.innerHTML = '<h2>Estado del Bot de WhatsApp</h2>';
+
+                        if (nuevoEstado === "activo") {
+                            qrBox.innerHTML += `
+                                <p class="text-success fw-bold">✅ Bot conectado exitosamente</p>
+                            `;
+                        } else {
+                            fetch("/static/qr.svg", { method: 'HEAD' })
+                                .then(r => {
+                                    if (r.ok) {
+                                        qrBox.innerHTML += `
+                                            <img src="/static/qr.svg?${Date.now()}" alt="QR para WhatsApp" style="max-width: 300px;">
+                                            <p class="mt-3 text-warning fw-bold">📲 Esperando conexión... Escanea el código QR con tu celular.</p>
+                                        `;
+                                    } else {
+                                        qrBox.innerHTML += `
+                                            <p class="text-danger fw-bold">❌ Servicio de WhatsApp deshabilitado. Ejecuta <code>whatsapp-bot/index.js</code>.</p>
+                                        `;
+                                    }
+                                }).catch(() => {
+                                    qrBox.innerHTML += `
+                                        <p class="text-danger fw-bold">❌ Servicio de WhatsApp deshabilitado. Ejecuta <code>whatsapp-bot/index.js</code>.</p>
+                                    `;
+                                });
+                        }
+
+                        mostrarAvisoCambio(`🔄 Estado actualizado: ${nuevoEstado.toUpperCase()}`);
+                    }
+                })
+                .catch(err => console.error("❌ Error verificando estado del bot:", err));
+        }
+
+        function mostrarAvisoCambio(mensaje) {
+            const aviso = document.createElement("div");
+            aviso.textContent = mensaje;
+            aviso.className = "alert alert-info text-center";
+            aviso.style.position = 'fixed';
+            aviso.style.top = '20px';
+            aviso.style.left = '50%';
+            aviso.style.transform = 'translateX(-50%)';
+            aviso.style.zIndex = '9999';
+            aviso.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+            aviso.style.maxWidth = '90%';
+            document.body.appendChild(aviso);
+
+            setTimeout(() => aviso.remove(), 4000);
+        }
+
+        setInterval(verificarEstadoBot, 5000);
+    </script>
+</body>
+
+</html>
