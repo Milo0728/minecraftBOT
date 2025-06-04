@@ -8,7 +8,6 @@ Este proyecto integra un panel de administración en Flask con un bot de WhatsAp
 proyectoGestion/
 ├── frontend/           # Panel web hecho en Flask
 ├── whatsapp-bot/       # Bot automatizado de WhatsApp
-├── users.json          # Lista de usuarios permitidos
 └── README.md
 ```
 
